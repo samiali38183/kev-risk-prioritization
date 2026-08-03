@@ -1,6 +1,6 @@
 # Methodology — KEV Risk Prioritization
 
-This document explains the methodology implemented in this repository. Everything here is derived from public sources (CISA, FIRST, NVD) and applied to synthetic data.
+This document explains the risk-based vulnerability prioritization methodology I applied during my DHS HS-POWER internship on the CBP Vulnerability Assessment Team, using only public federal guidance and public references. No internal data, figures, or system names appear here.
 
 ## 1. Problem framing
 
@@ -8,66 +8,84 @@ Federal and enterprise environments produce vulnerability scan output at a volum
 
 ## 2. Data inputs
 
+The methodology combines four inputs for every finding:
+
 | Input | Source | Role |
 |---|---|---|
-| CISA KEV Catalog | live from CISA / cisagov mirror | Confirmed exploitation evidence |
-| Synthetic scan dataset | `synthetic_data.py` | 50,000 findings shaped like Nessus/Tenable export |
-| CVSS scores | assigned per severity band | Severity if exploited |
-| EPSS scores | generated with a heavy-tailed beta distribution | Exploitation probability (30-day) |
-| Asset Criticality Rating (ACR) | 1–8 scale, middle-biased | Business/mission value of the asset |
-
-The synthetic generator is seeded (`seed=42` by default) so results are reproducible across runs.
+| CISA KEV Catalog | CISA (public) | Confirmed exploitation evidence |
+| CVSS score | NVD (public, per CVE) | Severity if exploited |
+| EPSS score | FIRST (public, per CVE) | Exploitation probability (30-day window) |
+| Asset Criticality Rating (ACR) | Enterprise asset context (e.g., HVA designation, internet exposure) | Business/mission value of the asset |
 
 ## 3. Matching
 
-Every scan finding carries a CVE identifier. `demo.py` builds a set of KEV CVE IDs from the live catalog and marks each finding `is_kev = True` or `False`. To simulate a realistic mix, ~2.5% of the synthetic findings have their CVE replaced with a real KEV ID before matching. EPSS for KEV-matched findings is redistributed on a Beta(2, 4) to reflect the higher exploitation-probability distribution observed for known-exploited CVEs.
+Every scan finding carries a CVE identifier. The KEV Catalog is treated as a set of CVE IDs, and each finding is marked as KEV-matched or not. This turns "known exploited in the wild" into a per-finding boolean the model can weight.
 
 ## 4. Population comparison
 
-`compare_populations()` produces a KEV vs. non-KEV table across four columns:
+The KEV-matched population is compared against the non-KEV population on four dimensions:
 
-- **findings** — volume in each population
-- **avg_cvss** — mean severity
-- **avg_epss** — mean exploitation probability
-- **avg_remediation_days** — how long findings stay open
+- **Volume** — how many findings fall in each group
+- **Average CVSS** — mean severity
+- **Average EPSS** — mean exploitation probability
+- **Average remediation days** — how long findings stay open
 
-The comparison surfaces the core insight of BOD 26-04: severity is roughly flat across the two populations, but exploitation probability is orders of magnitude higher in the KEV group. That is the signal a severity-only queue misses.
+The comparison surfaces the core insight of BOD 26-04: **severity is roughly flat across the two populations, but exploitation probability is dramatically higher in the KEV group.** That is exactly the signal a severity-only queue misses.
 
-## 5. Weighted risk model
+## 5. Concentration mapping
 
-Each finding is scored 0–100:
+For the KEV population, findings are grouped by system role, vendor, and technology to identify remediation focus areas — the systems, vendors, and product families where confirmed-exploited CVEs cluster. This informs where remediation effort produces the largest risk reduction per hour of engineering time.
+
+## 6. Weighted risk model
+
+Every finding is scored on a 0–100 scale using a weighted composite:
 
 ```
 risk_score = 100 * (
-    0.40 * kev_flag        # 1 if in KEV, else 0
-  + 0.25 * (acr / 8)       # normalized asset criticality
+    0.40 * kev_flag        # 1 if in KEV Catalog, else 0
+  + 0.25 * (acr / 8)       # normalized asset criticality (1–8 scale)
   + 0.20 * epss            # already 0–1
-  + 0.20 * (cvss / 10)     # normalized severity
+  + 0.20 * (cvss / 10)     # normalized severity (0–10 scale)
 )
 ```
 
-Weights reflect BOD 26-04's ordering: confirmed exploitation dominates, asset criticality is the next largest factor (because exploiting a low-value asset is a lower business impact than exploiting a High Value Asset), and EPSS and CVSS split the remaining weight roughly evenly. The weights are constants at the top of `risk_model.py` and can be swapped for any organization's local risk appetite.
+Weights reflect BOD 26-04's ordering:
 
-## 6. Output — the ranked queue
+- **KEV status carries the heaviest weight (0.40)** — confirmed exploitation is the single strongest indicator of real-world risk.
+- **Asset criticality (0.25)** — exploiting a low-value asset produces a lower business impact than exploiting a High Value Asset with the same CVE.
+- **EPSS and CVSS split the remaining weight (0.20 each)** — likelihood of exploitation and severity if exploited.
 
-`score_dataframe()` returns the full scan set sorted by `risk_score` descending. `demo.py` prints the top 10. Every top-10 finding in a typical run is a KEV match — which is the intended behavior.
+Weights are a starting point, not a mandate. In production, they are tuned to the organization's risk appetite (for example, weighting internet exposure more heavily for public-facing systems, or raising ACR weight for regulated environments).
 
-For a real environment, the top of that ranked queue is the remediation work-list for the current sprint; the middle is monitoring; the tail is deferred with justification.
+## 7. Output — the ranked queue
 
-## 7. Alignment with BOD 26-04
+Findings are sorted by `risk_score` descending. The top of the ranked queue is the remediation work-list for the current sprint; the middle is monitoring; the tail is deferred with justification. In practice, the top of a ranked queue built with these weights is dominated by KEV matches — which is the intended behavior.
 
-| BOD 26-04 element | How this repo implements it |
+## 8. Alignment with BOD 26-04
+
+| BOD 26-04 element | How this methodology implements it |
 |---|---|
-| Prioritize confirmed exploitation | KEV status carries the heaviest weight (0.40) |
-| Incorporate exploitation probability | EPSS included as a scoring input (0.20) |
-| Weight asset context | ACR (Asset Criticality Rating) at 0.25 |
-| Bench remediation against risk-based timelines | `avg_remediation_days` reported per population |
+| Prioritize confirmed exploitation | KEV status carries the heaviest single weight (0.40) |
+| Incorporate exploitation probability | EPSS as a scoring input (0.20) |
+| Weight asset context | ACR at 0.25 (captures HVA designation and internet exposure) |
+| Bench remediation against risk-based timelines | Remediation-day averages reported per population |
 
-## 8. What this repo is not
+## 9. Deliverables (in the internship context)
 
-- **Not a scanner.** It consumes scan output; it does not generate it.
-- **Not a policy document.** BOD 26-04 is linked in the README; this repo implements one interpretation of a scoring model consistent with it.
-- **Not a replacement for organizational judgment.** Weights should be tuned to the environment. HVAs, internet exposure, and business context often warrant custom weighting.
+The methodology above supported four internship deliverables:
+
+- **Multi-page Power BI dashboard** integrating CVSS, EPSS, KEV status, and remediation-age metrics for federal-scale scan output.
+- **KEV vs. non-KEV analysis** demonstrating the exploitation-vs-severity gap on real data.
+- **Executive briefing** presenting the findings to technical and leadership audiences.
+- **Technical compliance reports** on vulnerability findings and remediation recommendations aligned with the NIST Cybersecurity Framework, FedRAMP, and Zero Trust architecture.
+
+The specific numbers, screenshots, and system references from those deliverables are non-public and are not included in this repository.
+
+## 10. What this document is not
+
+- **Not a policy document.** BOD 26-04 is the authoritative source; the linked CISA page is the reference.
+- **Not a replacement for organizational judgment.** Weights should be tuned per environment.
+- **Not a scanner.** The methodology consumes scan output; it does not generate it.
 
 ## References
 
