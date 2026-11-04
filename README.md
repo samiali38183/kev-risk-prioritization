@@ -35,18 +35,18 @@ KEV vs non-KEV population
 KEV concentration by system group: Remote Access=4, File Services=2, Public Web=1, ...
 ```
 
-Row 13 is the point: a CVSS 8.8 on a criticality-7 asset lands *below every KEV match*, including a
-CVSS 8.1 on a legacy file server. Severity-only queues get that ordering backwards.
+Look at row 13: a CVSS 8.8 on an important asset still ranks below every KEV match, including a CVSS 8.1
+on an old file server. If you sort by CVSS alone you get that order backwards.
 
 ## The problem
 
-Enterprise scanners produce more findings than any team can remediate, so the ordering of the queue matters
-as much as the patching. CVSS measures how bad an exploit *could* be; it says nothing about whether anyone
-is exploiting it. A 9.8 that was never weaponized is lower business risk than a 7.5 under mass exploitation
-today. **BOD 26-04** codifies the fix for federal agencies: confirmed exploitation (KEV) and exploitation
-probability (EPSS) come before paper severity.
+Scanners find way more vulnerabilities than a team can fix, so what you fix first matters a lot. CVSS
+tells you how bad a vulnerability could be, not whether anyone is actually exploiting it. A 9.8 nobody
+has weaponized is less urgent than a 7.5 that's being mass-exploited right now. BOD 26-04 tells federal
+agencies to prioritize the same way: known exploitation (KEV) and likelihood of exploitation (EPSS) first,
+then severity.
 
-The question the model answers: *if we can only patch 10% of open findings this sprint, which ones, and why?*
+So the question is: if you can only patch 10% of open findings this sprint, which ones?
 
 ## Quick start
 
@@ -76,13 +76,11 @@ the script works unchanged.
 
 ## What it does
 
-1. **Match** each finding's CVE against the KEV Catalog (offline JSON fixture or the live feed, same schema).
-2. **Score** each finding with the weighted composite below and sort descending.
-3. **Compare** the KEV and non-KEV populations on volume, mean CVSS, mean EPSS and mean days open. On real
-   data this is where the exploitation-vs-severity gap shows up: severity is roughly flat across the two
-   groups while exploitation probability is not.
-4. **Map concentration** of KEV findings by system group (and vendor, in the JSON output) so remediation
-   effort goes where confirmed-exploited CVEs cluster.
+1. Match each finding's CVE against the KEV Catalog (offline JSON fixture or the live feed, same schema).
+2. Score each finding with the weighted composite below and sort descending.
+3. Compare KEV vs non-KEV findings on count, average CVSS, average EPSS and average days open. On real
+   data, CVSS is pretty similar between the two groups but EPSS is very different.
+4. Count KEV findings by system group (and vendor, in the JSON output) to show where they cluster.
 
 ```
 findings.csv ──┐
@@ -99,11 +97,11 @@ The composite, from [`docs/methodology.md`](docs/methodology.md):
 risk = 100 * ( 0.40*kev + 0.25*(acr/8) + 0.20*epss + 0.20*(cvss/10) ) / Σweights
 ```
 
-- **KEV status 0.40** — confirmed exploitation is the single strongest signal, so a KEV match alone puts a
-  finding above any non-KEV finding on the same asset. That is the BOD 26-04 ordering, made arithmetic.
-- **Asset criticality 0.25** — HVA designation and internet exposure, normalized from a 1–8 ACR scale.
-  Same CVE, different blast radius.
-- **EPSS 0.20 / CVSS 0.20** — likelihood of exploitation in the next 30 days, and severity if exploited.
+- KEV status (0.40): known exploitation is the strongest signal, so a KEV match on its own puts a
+  finding above any non-KEV finding on the same asset. That matches the BOD 26-04 ordering.
+- Asset criticality (0.25): HVA status and internet exposure, on a 1-8 scale. The same CVE matters
+  more on a critical, exposed system.
+- EPSS (0.20) and CVSS (0.20): likelihood of exploitation in the next 30 days, and severity if exploited.
 - Weights are a starting point. `DEFAULT_WEIGHTS` is a dict; pass a different one to `score_all()` to raise
   internet exposure for public-facing fleets or ACR for regulated environments. The score is divided by the
   weight total so it stays on a 0–100 scale however the weights are tuned (the defaults sum to 1.05).
@@ -112,22 +110,21 @@ risk = 100 * ( 0.40*kev + 0.25*(acr/8) + 0.20*epss + 0.20*(cvss/10) ) / Σweight
 - Standard library only (`csv`, `json`, `argparse`, `statistics`, `urllib`) so it runs on a locked-down
   analyst workstation with no package install.
 
-The internship version of this work was a multi-page Power BI dashboard over real scan output plus an
-executive briefing and compliance reports; this script is the scoring logic from that work, rebuilt in
-the open on synthetic data.
+At the internship, this was a Power BI dashboard over real scan data plus a briefing and reports. This
+script is just the scoring logic, rebuilt on synthetic data so it can be public.
 
 ## Limitations
 
-- **Synthetic data.** `data/sample_findings.csv` uses real KEV CVE IDs but invented assets, ACR, EPSS,
+- Synthetic data. `data/sample_findings.csv` uses real KEV CVE IDs but invented assets, ACR, EPSS,
   CVSS and age values chosen to illustrate the ordering. It is not a dataset and proves nothing about
   any real environment. No figure here comes from internship data.
-- **Not a scanner and not an enrichment service.** It consumes CVSS/EPSS values you supply; it does not
+- It's not a scanner or an enrichment service. It consumes CVSS/EPSS values you supply; it does not
   query NVD or the FIRST EPSS API. The live mode fetches only the KEV catalog.
-- **Linear model.** A weighted sum is explainable to leadership and easy to tune, but it cannot express
-  "KEV *and* internet-exposed is categorically first". A rule layer on top is the obvious next step.
-- **No remediation-SLA logic.** BOD 26-04 timelines are reported as mean days open per population, not
+- It's a simple weighted sum. That's easy to explain and tune, but it can't express a rule like
+  "KEV and internet-exposed always goes first." Adding rules on top would be the next step.
+- No per-finding due dates. BOD 26-04 timelines are reported as mean days open per population, not
   evaluated per finding against due dates.
-- **Case study, not policy.** BOD 26-04 and the KEV Catalog are the authoritative sources.
+- This is a case study, not policy. BOD 26-04 and the KEV Catalog are the authoritative sources.
 
 ## Repository layout
 
