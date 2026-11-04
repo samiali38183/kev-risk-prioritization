@@ -1,0 +1,21 @@
+cve,asset,acr,cvss,epss,days_open,system_group,vendor,internet_exposed
+CVE-2021-44228,web-portal-01,8,10.0,0.97,42,Public Web,Apache,true
+CVE-2023-4966,vpn-gw-02,8,9.4,0.96,18,Remote Access,Citrix,true
+CVE-2024-3400,fw-edge-01,8,10.0,0.95,9,Perimeter,Palo Alto Networks,true
+CVE-2017-0144,file-srv-legacy,5,8.1,0.97,210,File Services,Microsoft,false
+CVE-2019-19781,vpn-gw-01,7,9.8,0.97,120,Remote Access,Citrix,true
+CVE-2021-34527,print-srv-03,4,8.8,0.96,160,Print Services,Microsoft,false
+CVE-2023-23397,mail-client-fleet,6,9.8,0.94,30,Endpoints,Microsoft,false
+CVE-2022-22965,app-srv-07,6,9.8,0.97,75,Internal Apps,VMware,false
+CVE-2024-21887,vpn-gw-03,8,9.1,0.96,12,Remote Access,Ivanti,true
+CVE-2023-34362,sftp-transfer-01,7,9.8,0.95,60,File Services,Progress,true
+CVE-2020-1472,dc-01,8,10.0,0.65,95,Identity,Microsoft,false
+CVE-2018-13379,vpn-old-01,6,9.8,0.97,300,Remote Access,Fortinet,true
+CVE-2023-99991,dev-build-04,2,9.8,0.02,14,Dev/Test,ExampleVendor,false
+CVE-2023-99992,hr-app-02,5,9.1,0.01,45,Internal Apps,ExampleVendor,false
+CVE-2023-99993,kiosk-lobby,1,9.8,0.03,200,Kiosks,ExampleVendor,false
+CVE-2023-99994,reporting-db-01,6,7.5,0.08,33,Databases,ExampleVendor,false
+CVE-2023-99995,wiki-internal,3,6.5,0.01,400,Internal Apps,ExampleVendor,false
+CVE-2023-99996,backup-srv-02,7,8.8,0.05,22,Backup,ExampleVendor,false
+CVE-2023-99997,monitoring-01,4,5.3,0.02,88,Monitoring,ExampleVendor,false
+CVE-2023-99998,test-vm-19,1,9.9,0.01,10,Dev/Test,ExampleVendor,false

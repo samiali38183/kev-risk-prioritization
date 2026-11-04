@@ -46,8 +46,12 @@ risk_score = 100 * (
   + 0.25 * (acr / 8)       # normalized asset criticality (1–8 scale)
   + 0.20 * epss            # already 0–1
   + 0.20 * (cvss / 10)     # normalized severity (0–10 scale)
-)
+) / 1.05                   # divide by the weight total so the scale is a true 0–100
 ```
+
+The weights sum to 1.05, so the composite is divided by the weight total; this keeps the score on a 0–100
+scale without changing the ordering, and it holds for any re-tuned weight set. `kev_prioritize.py` at the
+repository root implements this exactly.
 
 Weights reflect BOD 26-04's ordering:
 

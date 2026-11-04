@@ -1,14 +1,4 @@
 __pycache__/
 *.pyc
-*.pyo
-.venv/
-venv/
-env/
-.idea/
-.vscode/
-.DS_Store
-*.egg-info/
-build/
-dist/
-known_exploited_vulnerabilities.json
-*.log
+.pytest_cache/
+ranked.csv
