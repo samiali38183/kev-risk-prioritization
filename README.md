@@ -4,7 +4,7 @@
 ![python](https://img.shields.io/badge/python-3.9%2B%20%C2%B7%20stdlib%20only-blue)
 ![license](https://img.shields.io/badge/license-MIT-lightgrey)
 
-**Rank vulnerability scan findings by known exploitation (CISA KEV), exploit likelihood (EPSS), severity (CVSS) and asset criticality, in the order CISA BOD 26-04 asks federal agencies to work.**
+**Rank vulnerability scan findings by known exploitation (CISA KEV), exploit likelihood (EPSS), severity (CVSS) and asset criticality, with KEV status first, in the spirit of CISA BOD 26-04.**
 
 Scanners return more findings than a team can patch. Sorting by CVSS puts severity first and ignores whether anyone is exploiting the bug. This tool puts KEV matches first. On the 20-finding synthetic sample in this repo, a CVSS-only sort puts 9 KEV findings in its top 12; the risk score puts all 12 there. The two KEV findings with the lowest CVSS (8.8 and 8.1) land at positions 15 and 17 of 20 by CVSS and at 12 and 11 by risk.
 
@@ -12,7 +12,7 @@ Scanners return more findings than a team can patch. Sorting by CVSS puts severi
 
 ## The problem
 
-CVSS describes how bad a vulnerability could be, not whether it is being used. A 9.8 nobody has weaponized is less urgent than a 7.5 under mass exploitation. BOD 26-04 directs agencies to prioritize known exploitation (KEV) and likelihood of exploitation (EPSS) ahead of raw severity.
+CVSS describes how bad a vulnerability could be, not whether it is being used. A 9.8 nobody has weaponized is less urgent than a 7.5 under mass exploitation. CISA BOD 26-04 ties remediation urgency to known exploitation (KEV status), public exposure, whether exploitation can be automated and technical impact, rather than to CVSS alone. EPSS and asset criticality are this project's own additions; they are not BOD 26-04 inputs.
 
 The question this tool answers: if you can fix only a slice of open findings this sprint, which ones?
 
@@ -39,7 +39,7 @@ risk = 100 * ( 0.40*kev + 0.25*(acr/8) + 0.20*epss + 0.20*(cvss/10) ) / 1.05
 
 | Input | Weight | Why |
 |---|---|---|
-| KEV match (0/1) | 0.40 | Confirmed exploitation is the strongest signal; matches the BOD 26-04 ordering |
+| KEV match (0/1) | 0.40 | Confirmed exploitation is the strongest signal; consistent with the KEV-first approach of BOD 26-04 |
 | Asset criticality, ACR 1-8 | 0.25 | Same CVE matters more on a critical or internet-exposed system |
 | EPSS (0-1) | 0.20 | Probability of exploitation in the next 30 days |
 | CVSS (0-10) | 0.20 | Severity if exploited |
@@ -123,7 +123,7 @@ Row 13 is a CVSS 8.8 on a high-criticality asset (ACR 7). It ranks below every K
 
 ## Real-world applicability
 
-The input is what a vulnerability scanner export plus an asset inventory already contains: CVE, asset, CVSS, a criticality rating, and an EPSS value from the public FIRST feed. A Tenable or Nessus export joined with an asset list maps onto the CSV columns directly. The output is a ranked work-list for a remediation sprint, with a population comparison and a KEV concentration view to show where remediation effort pays off most (for example, which system groups or vendors hold the exploited CVEs). The methodology behind it is written up in [`docs/methodology.md`](docs/methodology.md), including the section-by-section alignment with BOD 26-04.
+The input is what a vulnerability scanner export plus an asset inventory already contains: CVE, asset, CVSS, a criticality rating, and an EPSS value from the public FIRST feed. A Tenable or Nessus export joined with an asset list maps onto the CSV columns directly. The output is a ranked work-list for a remediation sprint, with a population comparison and a KEV concentration view to show where remediation effort pays off most (for example, which system groups or vendors hold the exploited CVEs). The methodology behind it is written up in [`docs/methodology.md`](docs/methodology.md), including how the weights relate to the KEV-first approach of BOD 26-04 and which inputs are this project's own additions.
 
 ## Limitations
 
@@ -132,7 +132,7 @@ The input is what a vulnerability scanner export plus an asset inventory already
 - **Simple weighted sum.** Easy to explain and tune, but it cannot express a rule such as "KEV and internet-exposed always goes first". Hard rules layered on top would be the next step.
 - **No per-finding due dates.** Remediation age is reported as mean days open per population, not evaluated against BOD 26-04 deadlines per finding.
 - **Weights are a starting point,** not validated against outcome data.
-- **Not policy.** BOD 26-04 and the KEV Catalog are the authoritative sources.
+- **Not policy, and not an implementation of BOD 26-04.** The scoring formula, including the EPSS and asset-criticality terms and all weights, is this project's own design. BOD 26-04 and the KEV Catalog are the authoritative sources.
 
 ## Repository layout
 
@@ -141,7 +141,7 @@ kev_prioritize.py          scoring, matching, population compare, CLI (stdlib on
 data/sample_findings.csv   20 synthetic findings (12 KEV, 8 non-KEV)
 data/sample_kev.json       offline KEV fixture in the CISA feed schema
 tests/test_scoring.py      9 tests: bounds, normalization, KEV-over-severity, clamping, pipeline, CLI
-docs/methodology.md        methodology and its BOD 26-04 alignment
+docs/methodology.md        methodology and its relationship to BOD 26-04
 .github/workflows/ci.yml   unittest + CLI run on Python 3.9 and 3.13
 ```
 

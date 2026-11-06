@@ -24,7 +24,7 @@ class ScoreTests(unittest.TestCase):
         self.assertAlmostEqual(kp.risk_score(True, 0, 0.0, 0.0), 100 * 0.40 / 1.05, places=1)
 
     def test_kev_outranks_severity_alone(self):
-        # The BOD 26-04 point: a KEV CVSS-7.5 outranks a non-KEV CVSS-9.8 on identical assets.
+        # The KEV-first point: a KEV CVSS-7.5 outranks a non-KEV CVSS-9.8 on identical assets.
         kev_moderate = kp.risk_score(True, acr=5, epss=0.5, cvss=7.5)
         nonkev_critical = kp.risk_score(False, acr=5, epss=0.05, cvss=9.8)
         self.assertGreater(kev_moderate, nonkev_critical)
