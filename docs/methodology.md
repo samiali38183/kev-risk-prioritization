@@ -4,7 +4,7 @@ This document explains the risk-based vulnerability prioritization methodology I
 
 ## 1. Problem framing
 
-Federal and enterprise environments produce vulnerability scan output at a volume no team can remediate synchronously. Prioritization decisions therefore drive real-world risk reduction more than the mechanics of patching. CISA's **Binding Operational Directive 26-04** formalizes a risk-based ordering that puts confirmed exploitation ahead of theoretical severity.
+Federal and enterprise environments produce vulnerability scan output at a volume no team can remediate synchronously. Prioritization decisions therefore drive real-world risk reduction more than the mechanics of patching. CISA's **Binding Operational Directive 26-04** takes a KEV-centered, risk-based approach that puts confirmed exploitation ahead of theoretical severity. The weighted model below is this project's own design, consistent with that KEV-first approach; it is not a restatement of the directive.
 
 ## 2. Data inputs
 
@@ -30,7 +30,7 @@ The KEV-matched population is compared against the non-KEV population on four di
 - **Average EPSS** — mean exploitation probability
 - **Average remediation days** — how long findings stay open
 
-The comparison surfaces the core insight of BOD 26-04: **severity is roughly flat across the two populations, but exploitation probability is dramatically higher in the KEV group.** That is exactly the signal a severity-only queue misses.
+The comparison illustrates the KEV-first argument: **severity is roughly flat across the two populations, but exploitation probability is dramatically higher in the KEV group.** That is exactly the signal a severity-only queue misses.
 
 ## 5. Concentration mapping
 
@@ -53,7 +53,7 @@ The weights sum to 1.05, so the composite is divided by the weight total; this k
 scale without changing the ordering, and it holds for any re-tuned weight set. `kev_prioritize.py` at the
 repository root implements this exactly.
 
-Weights reflect BOD 26-04's ordering:
+Weights reflect a KEV-first ordering, consistent with BOD 26-04's KEV-centered approach:
 
 - **KEV status carries the heaviest weight (0.40)** — confirmed exploitation is the single strongest indicator of real-world risk.
 - **Asset criticality (0.25)** — exploiting a low-value asset produces a lower business impact than exploiting a High Value Asset with the same CVE.
@@ -65,14 +65,16 @@ Weights are a starting point, not a mandate. In production, they are tuned to th
 
 Findings are sorted by `risk_score` descending. The top of the ranked queue is the remediation work-list for the current sprint; the middle is monitoring; the tail is deferred with justification. In practice, the top of a ranked queue built with these weights is dominated by KEV matches — which is the intended behavior.
 
-## 8. Alignment with BOD 26-04
+## 8. Relationship to BOD 26-04
 
-| BOD 26-04 element | How this methodology implements it |
-|---|---|
-| Prioritize confirmed exploitation | KEV status carries the heaviest single weight (0.40) |
-| Incorporate exploitation probability | EPSS as a scoring input (0.20) |
-| Weight asset context | ACR at 0.25 (captures HVA designation and internet exposure) |
-| Bench remediation against risk-based timelines | Remediation-day averages reported per population |
+BOD 26-04 ties remediation urgency to KEV status together with factors such as whether the asset is publicly exposed, whether exploitation can be automated and the technical impact. This project does not implement the directive's decision factors or its timelines. It borrows the KEV-first idea and adds its own inputs:
+
+| Element | Source | How this methodology handles it |
+|---|---|---|
+| Prioritize confirmed exploitation (KEV) | Consistent with BOD 26-04's KEV-centered approach | KEV status carries the heaviest single weight (0.40) |
+| Exploitation probability (EPSS) | Added by this project (not a BOD 26-04 element) | EPSS as a scoring input (0.20) |
+| Asset criticality (ACR) | Added by this project (not a BOD 26-04 element) | ACR at 0.25 (captures HVA designation and internet exposure) |
+| Remediation age | Reporting only | Remediation-day averages reported per population; not evaluated against BOD 26-04 deadlines |
 
 ## 9. Deliverables (in the internship context)
 
