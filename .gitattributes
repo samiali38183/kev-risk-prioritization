@@ -1,0 +1,4 @@
+# Snapshot data and golden files are hashed or diffed byte for byte: never rewrite line endings.
+data/snapshot/** -text
+tests/golden/** -text
+docs/real_data_analysis.md -text

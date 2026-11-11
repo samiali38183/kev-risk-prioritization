@@ -1,0 +1,32 @@
+  #  risk  KEV CVE              CVSS  EPSS ACR days  asset
+  1 100.0  yes CVE-2015-1635     n/a 1.000   8   81  asset-4ff826
+  2 100.0  yes CVE-2018-0296     n/a 0.999   8  226  asset-409009
+  3  99.5  yes CVE-2018-19410    n/a 0.979   8  240  asset-c7b391
+  4  99.3  yes CVE-2010-3962     n/a 0.968   8   48  asset-12ef35
+  5  96.3  yes CVE-2020-12641    n/a 0.844   8  187  asset-4b714b
+  6  93.1  yes CVE-2020-11652    n/a 0.864   7  248  asset-1a8414
+  7  93.0  yes CVE-2012-1535     n/a 0.704   8   28  asset-d56b4e
+  8  92.6  yes CVE-2017-12617    n/a 1.000   6  122  asset-82bbd5
+  9  92.6  yes CVE-2023-34362    n/a 0.999   6   41  asset-d26675
+ 10  92.6  yes CVE-2023-29298    n/a 0.998   6  245  asset-0db31a
+ 11  92.6  yes CVE-2026-21589    n/a 0.997   6  237  asset-e202ef
+ 12  92.4  yes CVE-2020-10199    n/a 0.991   6  289  asset-534d51
+ 13  91.9  yes CVE-2016-3081     n/a 0.969   6  319  asset-99a5b1
+ 14  90.8  yes CVE-2025-11371    n/a 0.921   6  229  asset-f627ca
+ 15  89.1  yes CVE-2026-97229    n/a 0.693   7  135  asset-69c409
+ 16  89.1  yes CVE-2020-1054     n/a 0.539   8   15  asset-3b3067
+ 17  88.9  yes CVE-2016-6277     n/a 0.998   5  252  asset-0e3ce2
+ 18  88.9  yes CVE-2017-1000353  n/a 0.997   5   11  asset-a517e6
+ 19  88.9  yes CVE-2020-16846    n/a 0.996   5  311  asset-d8fc2f
+ 20  88.0  yes CVE-2019-20085    n/a 0.961   5  337  asset-75d11f
+ 21  88.0  yes CVE-2023-28252    n/a 0.489   8  151  asset-fab041
+ 22  87.8  yes CVE-2025-57819    n/a 0.952   5  137  asset-939775
+ 23  86.9  yes CVE-2022-26352    n/a 0.912   5  113  asset-e38325
+ 24  86.1  yes CVE-2024-58136    n/a 0.878   5  207  asset-b053b0
+ 25  86.0  yes CVE-2023-2033     n/a 0.406   8  140  asset-e12b60
+
+KEV vs non-KEV population
+  kev      n=100 avg CVSS n/a   avg EPSS 0.529  avg days open 189.4
+  non_kev  n=1900 avg CVSS n/a   avg EPSS 0.025  avg days open 183.1
+
+KEV concentration by system group: (unknown)=100
