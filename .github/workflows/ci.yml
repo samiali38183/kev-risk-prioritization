@@ -5,19 +5,58 @@ on:
     branches: [main]
   pull_request:
 
-permissions:
-  contents: read
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
+    name: test (${{ matrix.python }})
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
     strategy:
       matrix:
         python: ["3.9", "3.13"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: ${{ matrix.python }}
-      - run: python -m unittest discover -s tests -v
-      - run: python kev_prioritize.py data/sample_findings.csv --kev data/sample_kev.json
+      - name: Unit tests
+        run: python -m unittest discover -s tests -v
+      - name: Run the tool on the synthetic demo
+        run: python kev_prioritize.py data/sample_findings.csv --kev data/sample_kev.json
+      - name: Run the tool on the real snapshot and compare with the golden file
+        run: |
+          python kev_prioritize.py data/snapshot/mixed_findings.csv \
+            --kev data/snapshot/known_exploited_vulnerabilities.json --top 25 -o "$RUNNER_TEMP/top25.txt"
+          diff -u tests/golden/snapshot_top25.txt "$RUNNER_TEMP/top25.txt"
+          python kev_prioritize.py data/snapshot/mixed_findings.csv \
+            --kev data/snapshot/known_exploited_vulnerabilities.json --format csv -o "$RUNNER_TEMP/ranked.csv"
+          echo "$(cat tests/golden/snapshot_ranked_csv.sha256)  $RUNNER_TEMP/ranked.csv" | sha256sum --check -
+      - name: Check the generated analysis is current
+        run: python scripts/analyze_snapshot.py --check
+
+  workflow-lint:
+    name: workflow lint (zizmor)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - name: zizmor (offline)
+        run: |
+          python -m pip install --disable-pip-version-check zizmor==1.32.0
+          zizmor --offline --persona=auditor .github
