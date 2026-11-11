@@ -1,0 +1,50 @@
+{
+  "epss": {
+    "model_version": "v2026.06.15",
+    "raw_bytes": 2837556,
+    "raw_file": "epss_scores-2026-11-11.csv.gz",
+    "raw_sha256": "1f57c666e70798638d84923302d2d54bc52b3da71e49984bc8f13e22291818e7",
+    "rows_total": 404864,
+    "score_date": "2026-11-11T12:00:22Z",
+    "terms": "Free to use, no registration; attribution requested (https://www.first.org/epss/faq)",
+    "url": "https://epss.empiricalsecurity.com/epss_scores-2026-11-11.csv.gz"
+  },
+  "kev": {
+    "bytes": 1850831,
+    "catalogVersion": "2026.11.10",
+    "count": 1779,
+    "dateReleased": "2026-11-10T19:03:29.8375Z",
+    "file": "known_exploited_vulnerabilities.json",
+    "license": "CC0 1.0 (https://www.cisa.gov/sites/default/files/licenses/kev/license.txt)",
+    "sha256": "41c8091ad62d508d6f8906ad5cd26b20efe551f7d51b95ecc8a6981fa640b4ea",
+    "unique_cve_ids": 1779,
+    "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
+  },
+  "population_stats": {
+    "0.1": {
+      "kev_ge": 1338,
+      "non_kev_ge": 16203
+    },
+    "0.5": {
+      "kev_ge": 909,
+      "non_kev_ge": 3473
+    },
+    "0.9": {
+      "kev_ge": 489,
+      "non_kev_ge": 337
+    }
+  },
+  "retrieved_utc": "2026-11-11",
+  "subset": {
+    "file": "epss_subset.csv",
+    "kev_ids_missing_from_epss": [],
+    "kev_rows": 1779,
+    "non_kev_population": 403085,
+    "non_kev_sampled": 5000,
+    "rows": 6779,
+    "sample_size": 5000,
+    "sampling": "non-KEV CVEs ordered by sha256('<seed>:<CVE>'), first N kept",
+    "seed": "kev-risk-prioritization-2026-11-11",
+    "sha256": "919eb894c02006fe9e2962b0b151765ec87d26f6076f6b98ba0f23923bc35c9b"
+  }
+}

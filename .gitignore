@@ -14,3 +14,6 @@ known_exploited_vulnerabilities.json
 *.log
 .pytest_cache/
 ranked.csv
+
+# pinned real-data snapshot (see data/snapshot/SNAPSHOT.md)
+!data/snapshot/known_exploited_vulnerabilities.json
