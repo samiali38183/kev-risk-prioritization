@@ -1,4 +1,5 @@
 """Unit tests for kev_prioritize.py. Run: python -m pytest -q  (or python -m unittest)"""
+
 import os
 import sys
 import unittest
@@ -62,13 +63,21 @@ class PipelineTests(unittest.TestCase):
         self.assertGreater(comp["kev"]["avg_epss"], comp["non_kev"]["avg_epss"])
 
     def test_cli_runs_json(self):
-        import json
         import io
+        import json
         from contextlib import redirect_stdout
+
         buf = io.StringIO()
         with redirect_stdout(buf):
-            rc = kp.main([os.path.join(DATA, "sample_findings.csv"),
-                          "--kev", os.path.join(DATA, "sample_kev.json"), "--format", "json"])
+            rc = kp.main(
+                [
+                    os.path.join(DATA, "sample_findings.csv"),
+                    "--kev",
+                    os.path.join(DATA, "sample_kev.json"),
+                    "--format",
+                    "json",
+                ]
+            )
         self.assertEqual(rc, 0)
         out = json.loads(buf.getvalue())
         self.assertEqual(len(out["ranked"]), 20)
