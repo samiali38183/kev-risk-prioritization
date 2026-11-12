@@ -2,6 +2,7 @@
 
 Run: python -m unittest discover -s tests
 """
+
 import csv
 import gzip
 import hashlib
@@ -108,18 +109,25 @@ class NoCvssScoringTests(unittest.TestCase):
         self.assertAlmostEqual(kp.risk_score(True, 0, 0.0, None), 47.1, places=1)
 
     def test_blank_cvss_cell_loads_as_none(self):
-        rows = [{"cve": "cve-2021-44228", "asset": "a", "acr": "4", "cvss": "", "epss": "0.5", "days_open": "3"},
-                {"cve": "CVE-2020-0001", "asset": "b", "acr": "4", "epss": "0.5", "days_open": "3"}]
+        rows = [
+            {"cve": "cve-2021-44228", "asset": "a", "acr": "4", "cvss": "", "epss": "0.5", "days_open": "3"},
+            {"cve": "CVE-2020-0001", "asset": "b", "acr": "4", "epss": "0.5", "days_open": "3"},
+        ]
         findings = kp.load_findings_from_rows(rows)
         self.assertEqual([f.cvss for f in findings], [None, None])
         ranked = kp.score_all(findings, {"CVE-2021-44228"})
         self.assertTrue(ranked[0].kev)
         self.assertIsNone(kp.population_compare(ranked)["kev"]["avg_cvss"])
 
-    def test_mixed_cvss_and_missing_cvss_rank_without_error(self):
-        rows = [{"cve": "CVE-1", "asset": "a", "acr": "4", "cvss": "9.0", "epss": "0.5", "days_open": "3"},
-                {"cve": "CVE-2", "asset": "b", "acr": "4", "cvss": "", "epss": "0.5", "days_open": "3"}]
-        ranked = kp.score_all(kp.load_findings_from_rows(rows), set())
+    def test_mixed_cvss_and_missing_cvss_is_refused_by_default(self):
+        # Replaces the old "ranks without error" test: mixed lists are now an explicit opt-in.
+        rows = [
+            {"cve": "CVE-2020-0001", "asset": "a", "acr": "4", "cvss": "9.0", "epss": "0.5", "days_open": "3"},
+            {"cve": "CVE-2020-0002", "asset": "b", "acr": "4", "cvss": "", "epss": "0.5", "days_open": "3"},
+        ]
+        with self.assertRaises(kp.InputError):
+            kp.score_all(kp.load_findings_from_rows(rows), set())
+        ranked = kp.score_all(kp.load_findings_from_rows(rows), set(), allow_mixed=True)
         self.assertEqual(len(ranked), 2)
 
 
@@ -144,8 +152,10 @@ class FetchScriptTests(unittest.TestCase):
         self.assertNotEqual(a, c)
 
     def test_parse_epss_reads_header_comment_and_rows(self):
-        raw = gzip.compress(b"#model_version:v9,score_date:2026-01-02T00:00:00Z\n"
-                            b"cve,epss,percentile\nCVE-2020-0001,0.5,0.9\ncve-2020-0002,0.01,0.1\n")
+        raw = gzip.compress(
+            b"#model_version:v9,score_date:2026-01-02T00:00:00Z\n"
+            b"cve,epss,percentile\nCVE-2020-0001,0.5,0.9\ncve-2020-0002,0.01,0.1\n"
+        )
         meta, rows = fetch.parse_epss(raw)
         self.assertEqual(meta["model_version"], "v9")
         self.assertEqual(rows, [("CVE-2020-0001", "0.5", "0.9"), ("CVE-2020-0002", "0.01", "0.1")])
