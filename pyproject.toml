@@ -1,0 +1,30 @@
+# Tool configuration only (this project has no install step and no runtime dependencies).
+# Lint and type checks run in CI with pinned versions; see .github/workflows/ci.yml.
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "S", "C4"]
+ignore = [
+    "S101",   # assert is fine in tests and in type-narrowing
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S", "E402", "B011"]
+"scripts/fetch_snapshot.py" = ["E402", "S310"]  # fixed https URLs only
+"scripts/analyze_snapshot.py" = ["E402", "S311"]  # seeded bootstrap, not security-sensitive
+"scripts/refresh_goldens.py" = ["E402"]
+"kev_prioritize.py" = ["E402"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.9"
+files = ["kev_prioritize.py", "scripts"]
+strict_optional = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+disallow_untyped_defs = true

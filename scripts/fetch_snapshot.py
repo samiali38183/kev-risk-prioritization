@@ -18,6 +18,7 @@ Typical use:
 Note: cisa.gov serves only the CURRENT KEV catalog, so a later download will differ from the committed
 one. The committed KEV JSON is the pin; --check against local raw files is the reproducible path.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -30,7 +31,7 @@ import json
 import os
 import sys
 import urllib.request
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 KEV_URL = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
 EPSS_URL_TEMPLATE = "https://epss.empiricalsecurity.com/epss_scores-{date}.csv.gz"
@@ -82,7 +83,9 @@ def sample_key(seed: str, cve: str) -> str:
     return hashlib.sha256(("%s:%s" % (seed, cve)).encode("utf-8")).hexdigest()
 
 
-def build_subset(rows: List[Row], kev_ids: set, seed: str, sample_size: int):
+def build_subset(
+    rows: List[Row], kev_ids: Set[str], seed: str, sample_size: int
+) -> Tuple[List[Tuple[str, str, str, str]], List[Row], List[Row]]:
     """KEV rows + the `sample_size` non-KEV rows with the smallest sample_key. Sorted by CVE ID."""
     kev_rows = [r for r in rows if r[0] in kev_ids]
     non_kev = [r for r in rows if r[0] not in kev_ids]
@@ -93,7 +96,7 @@ def build_subset(rows: List[Row], kev_ids: set, seed: str, sample_size: int):
     return out, kev_rows, non_kev
 
 
-def subset_csv_bytes(subset) -> bytes:
+def subset_csv_bytes(subset: List[Tuple[str, str, str, str]]) -> bytes:
     buf = io.StringIO()
     w = csv.writer(buf, lineterminator="\n")
     w.writerow(["cve", "epss", "percentile", "in_kev"])
@@ -111,8 +114,9 @@ def population_stats(kev_rows: List[Row], non_kev_rows: List[Row]) -> Dict[str, 
     return stats
 
 
-def build(kev_raw: bytes, epss_raw: bytes, epss_url: str, seed: str, sample_size: int,
-          retrieved: str) -> Tuple[dict, bytes]:
+def build(
+    kev_raw: bytes, epss_raw: bytes, epss_url: str, seed: str, sample_size: int, retrieved: str
+) -> Tuple[dict, bytes]:
     kev = json.loads(kev_raw.decode("utf-8"))
     kev_ids = {v["cveID"].strip().upper() for v in kev["vulnerabilities"]}
     epss_meta, rows = parse_epss(epss_raw)
@@ -206,9 +210,16 @@ def main(argv: Optional[List[str]] = None) -> int:
     for name, data in wanted.items():
         with open(os.path.join(args.out, name), "wb") as fh:
             fh.write(data)
-    print("wrote %s: KEV %s (%s entries), EPSS %s, subset rows %d"
-          % (args.out, meta["kev"]["catalogVersion"], meta["kev"]["count"],
-             meta["epss"]["score_date"], meta["subset"]["rows"]))
+    print(
+        "wrote %s: KEV %s (%s entries), EPSS %s, subset rows %d"
+        % (
+            args.out,
+            meta["kev"]["catalogVersion"],
+            meta["kev"]["count"],
+            meta["epss"]["score_date"],
+            meta["subset"]["rows"],
+        )
+    )
     return 0
 
 
