@@ -1,10 +1,10 @@
 # Methodology: KEV Risk Prioritization
 
-This document explains the weighted risk-prioritization model implemented in `kev_prioritize.py`, using only public sources. No internal data, figures, or system names appear here. The model is a simple score of this project's own design; it is not an implementation of any CISA directive (see section 8).
+This document describes the weighted risk-prioritization model in `kev_prioritize.py`. It uses only public sources, and no internal data, figures or system names appear here. The model is a simple score of my own design. It is not an implementation of any CISA directive (see section 8).
 
 ## 1. Problem framing
 
-Vulnerability scan output arrives at a volume no team can remediate synchronously, so the ordering decision drives real-world risk reduction more than the mechanics of patching. The premise of this model is that confirmed exploitation should sort ahead of theoretical severity. The weighted model below is a teaching formula built on that premise. CISA's BOD 26-04 also treats known exploitation (KEV) as a prioritization input, but alongside three other variables and as a lookup table rather than a score; see [`bod-26-04.md`](bod-26-04.md).
+Vulnerability scan output arrives at a volume no team can remediate synchronously, so the ordering decision matters more than the mechanics of patching. The premise of this model is that confirmed exploitation should sort ahead of theoretical severity. The weighted model below is a formula I wrote to explore that premise. CISA's BOD 26-04 also treats known exploitation (KEV) as a prioritization input, but alongside three other variables and as a lookup table rather than a score; see [`bod-26-04.md`](bod-26-04.md).
 
 ## 2. Data inputs
 
@@ -27,12 +27,12 @@ Every scan finding carries a CVE identifier. The KEV Catalog is treated as a set
 
 The KEV-matched population is compared against the non-KEV population on four dimensions:
 
-- **Volume**: how many findings fall in each group
-- **Average CVSS**: mean severity
-- **Average EPSS**: mean exploitation probability
-- **Average remediation days**: how long findings stay open
+- Volume: how many findings fall in each group
+- Average CVSS: mean severity
+- Average EPSS: mean exploitation probability
+- Average remediation days: how long findings stay open
 
-On the synthetic demo the comparison is built to show a pattern: severity close across the two groups, exploitation probability far apart. Those demo values are invented. On real data the relationship between KEV and EPSS is measured in [`real_data_analysis.md`](real_data_analysis.md), with the caveat that the two signals are not independent (section 10).
+On the synthetic demo I built the values to show a pattern: severity close across the two groups, exploitation probability far apart. Those demo values are invented. On real data the relationship between KEV and EPSS is measured in [`real_data_analysis.md`](real_data_analysis.md), with the caveat that the two signals are not independent (section 10).
 
 ## 5. Concentration mapping
 
@@ -63,15 +63,15 @@ Imputing a value for missing CVSS was considered and not done: any imputed numbe
 
 The weights express a KEV-first ordering. They are a design choice, **not validated against outcome data**:
 
-- **KEV status carries the heaviest weight (0.40)**: confirmed exploitation is treated as the strongest indicator of real-world risk.
-- **Asset criticality (0.25)**: exploiting a low-value asset produces a lower business impact than exploiting a High Value Asset with the same CVE.
-- **EPSS and CVSS split the remaining weight (0.20 each)**: likelihood of exploitation and severity if exploited.
+- KEV status carries the heaviest weight (0.40). I treat confirmed exploitation as the strongest indicator of risk.
+- Asset criticality gets 0.25, because exploiting a low-value asset has less business impact than exploiting a High Value Asset with the same CVE.
+- EPSS and CVSS split the remaining weight (0.20 each): likelihood of exploitation and severity if exploited.
 
 Weights should be tuned to the organization's risk appetite (for example raising the ACR weight for regulated environments, via the `weights` argument of `score_all()`). There is no exposure weight: `internet_exposed` is not scored, and exposure can only enter through the ACR you supply.
 
 ## 7. Output: the ranked queue
 
-Findings are sorted by a total order: `risk_score` descending, then KEV status (KEV first), EPSS, CVSS (missing CVSS last), ACR and days open, all descending, then CVE id, asset, system group, vendor and exposure ascending. Because every field participates, the output does not depend on the input order. The top of the ranked queue is the candidate work-list for the current sprint. With these weights the top of the queue is dominated by KEV matches, which is the intended behavior and follows from the weights: it is a property of the formula, not evidence that the ordering reduces risk.
+Findings are sorted by a total order: `risk_score` descending, then KEV status (KEV first), EPSS, CVSS (missing CVSS last), ACR and days open, all descending, then CVE id, asset, system group, vendor and exposure ascending. Because every field participates, the output does not depend on the input order. The top of the ranked queue is the candidate work-list for the current sprint. With these weights the top of the queue is mostly KEV matches. That follows from the weights. It is a property of the formula, not evidence that the ordering reduces risk.
 
 ## 8. Relationship to BOD 26-04
 
@@ -88,19 +88,19 @@ This project does not implement the directive. It shares one idea with it (known
 | EPSS, CVSS | Not inputs | Inputs (0.20 each) |
 | Output | Deadline (3 / 14 / 60 days / on upgrade), forensic triage flag | Rank order; no deadlines |
 
-Remediation age (`days_open`) is reported per population (mean days open), used only as a late sort tie-break, and is not evaluated against any directive timeline.
+Remediation age (`days_open`) is reported per population as a mean, used only as a late sort tie-break, and is not compared with any directive timeline.
 
 ## 9. What this document is not
 
-- **Not a policy document.** BOD 26-04 is the authoritative source for what federal agencies must do; this project is neither a compliance tool nor a statement of what the directive requires.
-- **Not a replacement for organizational judgment.** Weights should be tuned per environment.
-- **Not a scanner.** The methodology consumes scan output; it does not generate it.
+- It is not a policy document. BOD 26-04 is the authority on what federal agencies must do, and this project is neither a compliance tool nor a statement of what the directive requires.
+- It does not replace judgment about your own environment. Tune the weights for it.
+- It is not a scanner. It reads scan output and does not generate it.
 
 ## 10. Known weaknesses of the inputs
 
-- **EPSS and KEV are not independent.** EPSS is trained on observed exploitation evidence, and FIRST lists a known-exploited-vulnerabilities feed (VulnCheck KEV) among its data partners. A model that adds EPSS to KEV partly counts the same evidence twice.
-- **KEV is an incomplete label.** Absence from the catalog does not mean a CVE is not exploited.
-- **CVSS measures severity, not likelihood.** It is retained at a modest weight for that reason.
+- EPSS and KEV are not independent. EPSS is trained on observed exploitation evidence, and FIRST lists a known-exploited-vulnerabilities feed (VulnCheck KEV) among its data partners. A model that adds EPSS to KEV partly counts the same evidence twice.
+- KEV is an incomplete label. Absence from the catalog does not mean a CVE is not exploited.
+- CVSS measures severity, not likelihood, so it keeps only a modest weight.
 
 ## References
 
