@@ -8,6 +8,14 @@
 
 Scanners return more findings than a team can patch. Sorting by CVSS puts severity first and ignores whether anyone is exploiting the bug. This tool puts KEV matches first. The score, its weights and the way it is tested are this project's own design; [what BOD 26-04 actually requires, and how this differs](docs/bod-26-04.md), is written down separately.
 
+Try it (Python 3.9+, standard library only, no network):
+
+```
+git clone https://github.com/samiali38183/kev-risk-prioritization && cd kev-risk-prioritization
+python kev_prioritize.py data/sample_findings.csv --kev data/sample_kev.json --top 14
+python -m unittest discover -s tests        # 63 tests
+```
+
 > **Data note.** Two kinds of data are used, and they are kept apart. The **real snapshot** (CISA KEV catalog 2026.11.10 and FIRST EPSS scores for 2026-11-11, pinned in [`data/snapshot/`](data/snapshot/SNAPSHOT.md)) gives real KEV membership and real EPSS values. Everything about assets (ACR, names, days open) is **invented**, and CVSS is **not used** with the real data. The small **synthetic demo** (`data/sample_*`) uses real KEV CVE IDs with invented values throughout. No internal, DHS or CBP data is in this repository.
 
 > **Read the headline numbers correctly.** "All 12 KEV findings in the top 12" (synthetic demo) and "all 100 KEV findings in the top 100" (mixed list on real KEV and EPSS data) are **true by construction**: KEV carries 0.40 of the weight, more than EPSS and CVSS combined, so KEV rows sort first. They show what the formula does, not that it predicts or reduces anything. The weights are unvalidated, and the one real measurement here (EPSS vs KEV, AUC 0.9515) is partly circular. See [Evidence](#evidence) and [Limitations](#limitations).
