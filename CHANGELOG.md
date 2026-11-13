@@ -1,15 +1,23 @@
 # Changelog
 
+## Unreleased
+
+- README wording only. The note about the headline numbers said "all KEV in the top N" is true by construction. That is
+  too strong: the 0.40 KEV weight guarantees it only on the same asset, and a non-KEV finding on ACR 8 with EPSS near 1
+  can outscore a KEV finding on ACR 1 with EPSS near 0. On both demo lists the lowest KEV score still beats the highest
+  non-KEV score (85.0 vs 38.5 synthetic, 51.9 vs 46.2 mixed real-data list), so the claim held there because of the data.
+  The README also now says plainly that the 0.9515 AUC is partly circular.
+
 ## 0.3.0 - 2026-11-11
 
-Fixes for defects found in review of 0.2.0. Tests: 27 before, 63 now.
+Fixes for defects found in 0.2.0. Tests: 27 before, 63 now.
 
 ### Behavior changes (read these before upgrading)
 
-- **Mixed CVSS lists are refused.** In 0.2.0 a row without CVSS was scored on a different scale from a row with CVSS (the same KEV finding, ACR 4, EPSS 0.5, scored 73.5 without CVSS and 59.5 with CVSS 0.0), so a list mixing both was ranked with incomparable scores. Now `score_all` raises and the CLI exits 2 on such a list unless `--allow-mixed` is given; then every row is scored without its CVSS term so all scores share one scale, a warning is printed, and each output row has a new `score_basis` field. Lists where every row has CVSS, or none does, score exactly as before.
-- **Input is validated instead of clamped at load.** `acr` must be 1-8, `epss` 0-1, `cvss` 0-10, `days_open` a whole number >= 0, `cve` of the form `CVE-YYYY-NNNN`, `internet_exposed` one of 1/true/yes/0/false/no/blank. Out-of-range values that 0.2.0 silently clamped are now errors with the row number. `risk_score()` itself still clamps for library callers.
-- **New CSV/JSON field `score_basis`**, so the CSV golden hash changed (see below).
-- **Sort order is now a total order** (score, KEV, EPSS, CVSS, ACR, days open, then CVE id, asset, system group, vendor, exposure). In 0.2.0 ties depended on input order although the README said otherwise. On the 2,000-row real-data list 139 tied rows changed position; the row set and every score are unchanged. KEV-concentration ties are now ordered by name.
+- Mixed CVSS lists are refused. In 0.2.0 a row without CVSS was scored on a different scale from a row with CVSS (the same KEV finding, ACR 4, EPSS 0.5, scored 73.5 without CVSS and 59.5 with CVSS 0.0), so a list mixing both was ranked with incomparable scores. Now `score_all` raises and the CLI exits 2 on such a list unless `--allow-mixed` is given; then every row is scored without its CVSS term so all scores share one scale, a warning is printed, and each output row has a new `score_basis` field. Lists where every row has CVSS, or none does, score exactly as before.
+- Input is validated instead of clamped at load. `acr` must be 1-8, `epss` 0-1, `cvss` 0-10, `days_open` a whole number >= 0, `cve` of the form `CVE-YYYY-NNNN`, `internet_exposed` one of 1/true/yes/0/false/no/blank. Out-of-range values that 0.2.0 silently clamped are now errors with the row number. `risk_score()` itself still clamps for library callers.
+- New CSV/JSON field `score_basis`, so the CSV golden hash changed (see below).
+- Sort order is now a total order (score, KEV, EPSS, CVSS, ACR, days open, then CVE id, asset, system group, vendor, exposure). In 0.2.0 ties depended on input order although the README said otherwise. On the 2,000-row real-data list 139 tied rows changed position; the row set and every score are unchanged. KEV-concentration ties are now ordered by name.
 
 ### Fixed
 
@@ -35,9 +43,9 @@ Fixes for defects found in review of 0.2.0. Tests: 27 before, 63 now.
 
 ### Corrections to earlier claims
 
-- **BOD 26-04.** Earlier text said the score was "in the spirit of" CISA BOD 26-04 and "consistent with" its KEV-first approach. That overstated the relationship. The directive uses four variables (publicly exposed, in KEV, automatable, technical impact) in a decision table with per-asset deadlines; KEV is one input, and EPSS, CVSS and asset criticality are not inputs. The project is now described as a simple weighted score of its own design, not an implementation of the directive. The variables it does not model are listed under Limitations, and `docs/bod-26-04.md` records what the directive says, with sources and what could not be verified.
-- **"Verified measurements" table removed.** It reported properties of invented EPSS and CVSS values on synthetic data (for example average EPSS 0.935 for KEV vs 0.029 for non-KEV), which says nothing about real vulnerabilities. The synthetic sample is kept and labeled as a demo of the formula. Real-data measurements replace it (see below).
-- **Methodology document.** Removed first-person internship framing and the section listing internship deliverables, none of which could be verified from this repository.
+- BOD 26-04. Earlier text said the score was "in the spirit of" CISA BOD 26-04 and "consistent with" its KEV-first approach. That overstated the relationship. The directive uses four variables (publicly exposed, in KEV, automatable, technical impact) in a decision table with per-asset deadlines; KEV is one input, and EPSS, CVSS and asset criticality are not inputs. The project is now described as a simple weighted score of its own design, not an implementation of the directive. The variables it does not model are listed under Limitations, and `docs/bod-26-04.md` records what the directive says, with sources and what could not be verified.
+- The "verified measurements" table is removed. It reported properties of invented EPSS and CVSS values on synthetic data (for example average EPSS 0.935 for KEV vs 0.029 for non-KEV), which says nothing about real vulnerabilities. The synthetic sample is kept and labeled as a demo of the formula. Real-data measurements replace it (see below).
+- Methodology document. Removed the internship framing and the section listing internship deliverables, none of which could be verified from this repository.
 
 ### Added
 

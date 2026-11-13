@@ -2,7 +2,7 @@
 """Risk-based vulnerability prioritization: KEV + ACR + EPSS + CVSS.
 
 Reference implementation of the weighted model described in docs/methodology.md. This is a simple
-weighted score of the author's own design that puts known-exploited vulnerabilities first. It is NOT
+weighted score of my own design that puts known-exploited vulnerabilities first. It is NOT
 an implementation of CISA BOD 26-04 (see docs/methodology.md section 8).
 Standard library only. Runs on the synthetic data in data/ or on your own CSV.
 
