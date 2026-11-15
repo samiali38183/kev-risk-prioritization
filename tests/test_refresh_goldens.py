@@ -62,9 +62,11 @@ class RefreshGoldensTests(unittest.TestCase):
 
 class ReadmeFigureTests(unittest.TestCase):
     def test_readme_figures_match_analysis(self):
-        # The README quotes figures by hand; this fails when a snapshot refresh leaves them stale.
-        with open(os.path.join(ROOT, "README.md"), encoding="utf-8") as fh:
+        # The README and docs/DESIGN_AND_LIMITS.md quote figures by hand; this fails when a snapshot refresh leaves them stale.
+        with open(os.path.join(ROOT, "docs", "DESIGN_AND_LIMITS.md"), encoding="utf-8") as fh:
             readme = fh.read()
+        with open(os.path.join(ROOT, "README.md"), encoding="utf-8") as fh:
+            front = fh.read()
         with open(os.path.join(ROOT, "docs", "real_data_analysis.md"), encoding="utf-8") as fh:
             doc = fh.read()
         m_doc = re.search(r"\*\*AUC of EPSS[^*]*?: ([0-9.]+)\*\* \(95% bootstrap interval ([0-9.]+) to ([0-9.]+)", doc)
@@ -72,6 +74,8 @@ class ReadmeFigureTests(unittest.TestCase):
         self.assertIsNotNone(m_doc)
         self.assertIsNotNone(m_readme)
         self.assertEqual(m_doc.groups(), m_readme.groups())
+        # the front README quotes the AUC itself
+        self.assertIn("AUC " + m_doc.group(1), front)
 
 
 if __name__ == "__main__":
