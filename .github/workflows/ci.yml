@@ -14,7 +14,8 @@ concurrency:
 jobs:
   test:
     name: test (${{ matrix.python }})
-    runs-on: ubuntu-latest
+    # ubuntu-latest (26.04) has no 3.9 build in setup-python; pin until 3.9 is dropped
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: read
