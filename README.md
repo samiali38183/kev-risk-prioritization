@@ -8,6 +8,10 @@ A small weighted score that ranks vulnerability findings with known-exploited (C
 
 Scanners return more findings than a team can patch. Sorting by CVSS puts severity first and ignores whether anyone is exploiting the bug, so this tool puts KEV matches first. The score, its weights and the tests are my own design. [What BOD 26-04 requires, and how this differs](docs/bod-26-04.md) is written up separately.
 
+![Left: EPSS scores of 1,779 known-exploited CVEs against 5,000 others, medians 0.533 and 0.006, AUC 0.9515. Right: this tool puts all 100 KEV findings of a 2,000-row list in its top 100, EPSS alone puts 65 and asset criticality alone puts 10. Bottom: the AUC is partly circular and the weights are unvalidated.](docs/img/hero-real-data.png)
+
+*On the real KEV catalog and EPSS scores, EPSS separates known-exploited CVEs from the rest with an AUC of 0.9515, but that result is partly circular because EPSS is trained on exploitation data that overlaps with KEV, so it is not validation of either. The tool's 100 of 100 comes mostly from its weights. Computed from [`data/snapshot/`](data/snapshot/SNAPSHOT.md) by `docs/img/make_hero.py` (needs matplotlib; the project itself stays standard-library only).*
+
 Try it (Python 3.9+, standard library only, no network):
 
 ```
