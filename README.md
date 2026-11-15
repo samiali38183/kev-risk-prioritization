@@ -44,6 +44,29 @@ KEV is worth as much as EPSS and CVSS together, so on the same asset a KEV findi
 
 [Design decisions, evidence, limitations and repository layout](docs/DESIGN_AND_LIMITS.md), [methodology](docs/methodology.md), [real-data analysis](docs/real_data_analysis.md), [how to refresh the snapshot](docs/REFRESHING_SNAPSHOT.md), [changelog](CHANGELOG.md).
 
+## Design
+
+- Input is a CSV with a header: `cve, asset, acr (1-8), epss (0-1), days_open`; optional `cvss (0-10), system_group, vendor, internet_exposed`. Rows are range-checked and a bad row fails the run with exit code 2.
+- KEV matching is a set lookup of upper-cased CVE IDs against a CISA-schema JSON file (`--kev`, offline) or the live feed (`--kev-live`, the only network call, 30 s timeout). An empty catalog is rejected.
+- The score is the weighted sum above divided by the weight total, so it is always 0-100. Without a CVSS column the CVSS weight is dropped and the rest is renormalized; such scores are marked `kev+acr+epss` and never mixed with `kev+acr+epss+cvss` ones.
+- `days_open` and `internet_exposed` are validated and carried to the output but do not enter the score; `days_open` only feeds the population mean and a late sort tie-break.
+- Ties are broken by KEV, EPSS, CVSS, ACR, days open, then input order, so the ranking is total and reproducible.
+- Output is `--format text` (top N, population comparison, KEV concentration by system group), `csv` or `json`, to stdout or `-o FILE`.
+- Weights live in a dict that `score_all()` accepts as a library argument; the CLI has no `--weights` flag.
+- Standard library only, Python 3.9+, single file; tests run with `unittest` and golden files pin the demo output.
+
+## Limitations
+
+- Every asset value (ACR, names, days open) in the repository is invented; only the KEV catalog and EPSS scores in the snapshot are real.
+- The weights are not validated against outcome data, and EPSS and KEV are not independent signals, so combining them double counts to some extent.
+- No remediation deadlines or SLA evaluation: it does not implement the BOD 26-04 decision table, and `internet_exposed` never changes a score.
+- No enrichment: EPSS and CVSS must already be in your CSV. Live mode fetches only the KEV catalog, never EPSS or NVD.
+- With `--allow-mixed`, CVSS values that do exist are ignored for scoring so all rows share one scale.
+- A CVE absent from KEV is not known to be safe; the catalog is incomplete by design.
+- I have only run it on the files in this repository, not on a real scanner export.
+
+The full list is in [docs/DESIGN_AND_LIMITS.md](docs/DESIGN_AND_LIMITS.md).
+
 ## License
 
 MIT, see [LICENSE](LICENSE). The pinned KEV data is CC0 1.0; EPSS data is free to use with attribution requested.
