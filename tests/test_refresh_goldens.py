@@ -62,7 +62,8 @@ class RefreshGoldensTests(unittest.TestCase):
 
 class ReadmeFigureTests(unittest.TestCase):
     def test_readme_figures_match_analysis(self):
-        # The README and docs/DESIGN_AND_LIMITS.md quote figures by hand; this fails when a snapshot refresh leaves them stale.
+        # The README and docs/DESIGN_AND_LIMITS.md quote figures by hand;
+        # this fails when a snapshot refresh leaves them stale.
         with open(os.path.join(ROOT, "docs", "DESIGN_AND_LIMITS.md"), encoding="utf-8") as fh:
             readme = fh.read()
         with open(os.path.join(ROOT, "README.md"), encoding="utf-8") as fh:
